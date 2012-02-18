@@ -1,0 +1,45 @@
+Simple Flash Card Tool
+
+All Flash Card tools suck. They are overloaded with crap that no-one needs, 
+but fail to do the basic tasks properly. Thats why I made a flash card tool
+that sucks in a way thats bearable for me. 
+Most flash card tools are based on boxes: A correctly answered question moves
+one box up. fc is not capable of this, but it uses roulette wheel selection 
+to give questions, that were often answered wrong, a higher chance of being
+picked.
+
+fc takes a text file that has to have a certain structure, like this:
+
+Q your question QEND
+P correct_answers wrong_answers PEND
+
+A
+your answer
+AEND
+
+Set correct_answers and wrong_answers initially to 1 as I don't yet check for 
+divisions by zero ;) Except for the answer block, no line breaks are allowed!
+See the example file for details.
+
+Run fc like this:
+
+$ ./fc yourfile.txt
+
+After quitting fc, all the questions in the file are ordered (best answered ones
+at the end).
+
+Make sure to backup your file before you use fc, because the file is overwritten
+at the end. This could screw everything up!
+
+Author: Stefan Kroboth <me [mailthingy] stefan-kroboth.com> 
+
+Licence: WTFPL. http://sam.zoy.org/wtfpl/ 
+         Support and use *free* software!
+
+TODOs
+* Check for divisions by zero
+* Create .tex file from questions.
+* Implement hint
+* Better parser
+* Exchange aweful code with good one (read: rewrite everything)
+* Stuff

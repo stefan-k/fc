@@ -1,0 +1,145 @@
+#!/usr/bin/perl
+use strict;
+use Term::ReadKey;
+
+################################################################################
+# Simple Flash Card Program                                                    #
+################################################################################
+#                                                                              #
+# Explanation 'n' stuff                                                        #
+#                                                                              #
+# Author: Stefan Kroboth <me [mailthingy] stefan-kroboth.com>                  #
+# Licence: WTFPL                                                               #
+#          http://sam.zoy.org/wtfpl/                                           #
+#                                                                              #
+################################################################################
+
+my $input = shift;
+#print "$input \n";
+open my $FH, "< $input" or die $!; 
+#exit;
+my @cards;
+my $card = { q => '',   # Question
+             a => '',   # Answer
+             c => '',   # Number of correct answers
+             w => '' }; # Number of wrong answers
+
+sub roulette
+{
+  my @cards = @_;
+  my $sum = 0;
+  $sum += $_->{w}/$_->{c} for @cards;
+
+  my $idx = rand($sum);
+  @cards = sort { $b->{w}/$b->{c} <=>  $a->{w}/$a->{c} } @cards;
+
+  my $x = 0;
+  my $elem = 0;
+  for(@cards)
+  {
+    $x += $_->{w}/$_->{c};
+    last if $idx < $x;
+    $elem++;
+  }
+  return $elem;
+}
+
+my $parsing_answer = 0;
+my $parsed_question = 0;
+
+PARSE: for (<$FH>)
+{
+  chomp;
+
+  if ($parsing_answer && $parsed_question && not /^AEND$/)
+  {
+    #print $_ . "\n";
+    $card->{a} .= $_ . ' ';
+  }
+  else
+  {
+    $parsing_answer = 0;
+    if (/^Q (?<question>.+) QEND$/)
+    {
+      #print $+{question} . "\n";
+      $card->{q} = $+{question};
+      $parsed_question = 1;
+    }
+    if (/^P (?<pointsc>[0-9]*) (?<pointsw>[0-9]*) PEND$/ && $parsed_question)
+    {
+      #print $+{pointsc} . " and " . $+{pointsw} . "\n";
+      $card->{c} = $+{pointsc};
+      $card->{w} = $+{pointsw};
+    }
+  }
+
+  $parsing_answer = 1 if /^A$/;
+
+  if (/^AEND$/)
+  {
+    push(@cards, $card);
+    $card = { q => '', a => '', c => '', w => '' }; 
+    $parsing_answer = 0;
+  }
+}
+
+close $FH;
+
+
+open my $tty, '<', '/dev/tty';
+
+QUESTIONS: while(1)
+{
+  @cards = sort { $b->{w}/$b->{c} <=>  $a->{w}/$a->{c} } @cards;
+  my $idx = roulette(@cards);
+
+  print "\033[2J"; # clear screen
+  print "$cards[$idx]->{q}\n";
+  print "(s)how s(k)ip (q)uit\n";
+  while(1)
+  {
+    ReadMode "raw";
+    my $key = ReadKey 0, $tty;
+    chomp $key;
+    ReadMode "normal";
+    last QUESTIONS if $key eq 'q';
+    last if $key eq 's';
+    next QUESTIONS if $key eq 'k';
+  }
+
+  print "$cards[$idx]->{a}\n";
+
+  print "(c)orrect (w)rong (h)int (q)uit\n";
+
+  while(1)
+  {
+    ReadMode "raw";
+    my $key = ReadKey 0, $tty;
+    chomp $key;
+    ReadMode "normal";
+    last QUESTIONS if $key eq 'q';
+
+    if ($key eq 'c')
+    {
+      $cards[$idx]->{c}++;
+      last;
+    }
+    if ($key eq 'w')
+    {
+      $cards[$idx]->{w}++;
+      last;
+    }
+  }
+}
+
+# write output file
+open my $SAVE, "> $input" or die $!;
+@cards = sort { $b->{w}/$b->{c} <=>  $a->{w}/$a->{c} } @cards;
+for (@cards)
+{
+  print $SAVE "Q $_->{q} QEND\n";
+  print $SAVE "P $_->{c} $_->{w} PEND\n\n";
+  print $SAVE "A\n$_->{a}\nAEND\n\n";
+} 
+close $SAVE;
+
