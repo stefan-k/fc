@@ -93,7 +93,7 @@ QUESTIONS: while(1)
   @cards = sort { $b->{w}/$b->{c} <=>  $a->{w}/$a->{c} } @cards;
   my $idx = roulette(@cards);
 
-  print "\033[2J"; # clear screen
+  print "\033[2J\033[H"; # clear screen
   print "$cards[$idx]->{q}\n";
   print "(s)how s(k)ip (q)uit\n";
   while(1)
