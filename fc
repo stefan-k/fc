@@ -54,7 +54,7 @@ PARSE: for (<$FH>)
   if ($parsing_answer && $parsed_question && not /^AEND$/)
   {
     #print $_ . "\n";
-    $card->{a} .= $_ . ' ';
+    $card->{a} .= $_ . "\n";
   }
   else
   {
